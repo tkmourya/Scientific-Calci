@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Scientific Calculator</title>
+    <style>
+        :root {
+            --primary-color: #2a2a2a;
+            --secondary-color: #3a3a3a;
+            --accent-color: #ff9500;
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+        }
+
+        .calculator {
+            background: var(--primary-color);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            width: 400px;
+        }
+
+        .display {
+            background: var(--secondary-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        #input {
+            background: none;
+            border: none;
+            width: 100%;
+            color: var(--text-color);
+            font-size: 2em;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+
+        #result {
+            color: #888;
+            font-size: 1.2em;
+            min-height: 24px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            background: var(--secondary-color);
+            color: var(--text-color);
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #4a4a4a;
+        }
+
+        .operator {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .operator:hover {
+            background: #ffaa33;
+        }
+
+        .scientific {
+            background: #4a4a4a;
+        }
+
+        .span-2 {
+            grid-column: span 2;
+        }
+
+        .deg-rad {
+            background: #5a5a5a;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <input type="text" id="input" readonly>
+            <p id="result"></p>
+        </div>
+        <div class="buttons">
+            <!-- Scientific Functions -->
+            <button class="scientific" onclick="appendFunction('sin(')">sin</button>
+            <button class="scientific" onclick="appendFunction('cos(')">cos</button>
+            <button class="scientific" onclick="appendFunction('tan(')">tan</button>
+            <button class="scientific" onclick="appendFunction('log(')">log</button>
+            
+            <button class="scientific" onclick="appendFunction('ln(')">ln</button>
+            <button class="scientific" onclick="appendToDisplay('√(')">√</button>
+            <button class="scientific" onclick="appendToDisplay('^')">x^y</button>
+            <button class="scientific" onclick="appendToDisplay('π')">π</button>
+
+            <button class="scientific" onclick="appendToDisplay('e')">e</button>
+            <button class="scientific" onclick="appendToDisplay('(')">(</button>
+            <button class="scientific" onclick="appendToDisplay(')')">)</button>
+            <button class="deg-rad" id="degRadBtn" onclick="toggleDegRad()">DEG</button>
+
+            <!-- Main Buttons -->
+            <button onclick="clearDisplay()">AC</button>
+            <button onclick="backspace()">⌫</button>
+            <button onclick="appendToDisplay('%')">%</button>
+            <button class="operator" onclick="appendToDisplay('/')">/</button>
+            
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button class="operator" onclick="appendToDisplay('*')">×</button>
+            
+            <button onclick="appendToDisplay('4')">4</button>
+            <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendToDisplay('6')">6</button>
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            
+            <button class="span-2" onclick="appendToDisplay('0')">0</button>
+            <button onclick="appendToDisplay('.')">.</button>
+            <button class="operator" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <script>
+        let isDegree = true;
+        const inputField = document.getElementById('input');
+        const resultField = document.getElementById('result');
+        const degRadBtn = document.getElementById('degRadBtn');
+
+        function appendToDisplay(value) {
+            inputField.value += value;
+        }
+
+        function appendFunction(func) {
+            inputField.value += func + ')';
+            // Move cursor back to before the closing bracket
+            inputField.focus();
+            inputField.selectionStart = inputField.value.length - 1;
+            inputField.selectionEnd = inputField.value.length - 1;
+        }
+
+        function clearDisplay() {
+            inputField.value = '';
+            resultField.textContent = '';
+        }
+
+        function backspace() {
+            inputField.value = inputField.value.slice(0, -1);
+        }
+
+        function toggleDegRad() {
+            isDegree = !isDegree;
+            degRadBtn.textContent = isDegree ? 'DEG' : 'RAD';
+        }
+
+        function calculate() {
+            try {
+                let expression = inputField.value;
+                
+                // Add missing closing brackets
+                const openBrackets = (expression.match(/\(/g) || []).length;
+                const closeBrackets = (expression.match(/\)/g) || []).length;
+                expression += ')'.repeat(openBrackets - closeBrackets);
+
+                // Replace mathematical constants
+                expression = expression.replace(/π/g, Math.PI);
+                expression = expression.replace(/e/g, Math.E);
+                
+                // Handle trigonometric functions
+                expression = expression.replace(/sin\(/g, 'Math.sin(');
+                expression = expression.replace(/cos\(/g, 'Math.cos(');
+                expression = expression.replace(/tan\(/g, 'Math.tan(');
+                
+                // Handle logarithms and square root
+                expression = expression.replace(/log\(/g, 'Math.log10(');
+                expression = expression.replace(/ln\(/g, 'Math.log(');
+                expression = expression.replace(/√\(/g, 'Math.sqrt(');
+                
+                // Handle power operator
+                expression = expression.replace(/\^/g, '**');
+                
+                // Convert degrees to radians if needed
+                if (isDegree) {
+                    expression = expression.replace(/Math\.sin\(([^)]+)\)/g, (match, p1) => {
+                        return `Math.sin((${p1} * Math.PI / 180))`;
+                    });
+                    expression = expression.replace(/Math\.cos\(([^)]+)\)/g, (match, p1) => {
+                        return `Math.cos((${p1} * Math.PI / 180))`;
+                    });
+                    expression = expression.replace(/Math\.tan\(([^)]+)\)/g, (match, p1) => {
+                        return `Math.tan((${p1} * Math.PI / 180))`;
+                    });
+                }
+
+                const result = eval(expression);
+                resultField.textContent = result;
+                inputField.value = result;
+            } catch (error) {
+                resultField.textContent = 'Error';
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9' || e.key === '.' || e.key === '+' || 
+                e.key === '-' || e.key === '*' || e.key === '/' || e.key === '%') {
+                appendToDisplay(e.key);
+            } else if (e.key === 'Enter') {
+                calculate();
+            } else if (e.key === 'Backspace') {
+                backspace();
+            } else if (e.key === 'Escape') {
+                clearDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
